@@ -35,6 +35,9 @@ if __name__ == "__main__":
         songd = sys.argv[3]
         jd.from_csv(listf, songd)
 
+    elif sys.argv[1] in ["--help", "-h", "-?"]:
+        print_usage()
+        exit(1)
     else:
         print("Invalid option!")
         print_usage()
