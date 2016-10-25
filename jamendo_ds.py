@@ -13,7 +13,11 @@ def load_clientid():
     return content[0]
 
 CLIENT_ID = load_clientid()
-OUTPUT_FOLDER = "./jamendo_genres/"
+OUTPUT_FOLDER = "./jamendo_gtzan/"
+
+if CLIENT_ID == "youridhere":
+    print("Please set your jamendo client_id in client_id.txt!")
+    exit(1)
 
 #abaixo segue uma parametrização para encontrar por gênero...
 #https://groups.google.com/forum/#!topic/jamendo-dev/3CmJzDiSBBY
