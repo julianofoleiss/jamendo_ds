@@ -167,9 +167,45 @@ def tally_classes(work):
 
     return classes
 
-def with_genres(genres):
+def from_csv(csv_filename="jamendo_list.csv", song_dir="./jamendo_downloaded/"):
 
-    file_list = codecs.open("jamendo_genres.csv", "w", encoding='utf-8')
+    if song_dir[-1] != "/":
+        song_dir += "/"
+    
+    OUTPUT_FOLDER = song_dir
+
+    with codecs.open(csv_filename, "r", encoding='utf-8') as f:
+        contents = f.readlines()
+    
+    work = []
+
+    for i in xrange(1, len(contents)):
+        track = contents[i].replace("\"", "").split(";")
+        genre = track[0].strip()
+        song_name = track[1].strip()
+        artist_name = track[2].strip()
+        url = track[3].strip()
+
+        work.append((genre + "_" + song_name + " (" + artist_name + ")", url, i) )
+    
+    pool = Pool(processes=4)
+
+    if not os.path.exists(OUTPUT_FOLDER):
+        os.makedirs(OUTPUT_FOLDER)
+
+    print("Downloading %d songs to %s..." % (len(work), OUTPUT_FOLDER))
+
+    pool.map(download_song, work)    
+
+
+def with_genres(genres, list_file="jamendo_list.csv", song_dir="./jamendo_downloaded/"):
+
+    if song_dir[-1] != "/":
+        song_dir += "/"
+    
+    OUTPUT_FOLDER = song_dir
+
+    file_list = codecs.open(list_file, "w", encoding='utf-8')
     file_list.write("genre;song;artist;downloadurl;\n")
 
     if type(genres) != list:
