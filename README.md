@@ -15,10 +15,7 @@ All string entries must be enclosed by double-quotes "**"**".
 
 ## example jamendo_ds csv file
 
-> genre;song;artist;downloadurl;\n
-
->"blues";"Stazioni metropolitane ";"Pasqualino Ubaldini";"https://mp3d.jamendo.com/download/track/601020/mp32/"\n
-
->"blues";"Inertia ";"The TenGooz";"https://mp3d.jamendo.com/download/track/5695/mp32/"\n
-
->"blues";"Put up a Resistance ";"Crete Boom";"https://mp3d.jamendo.com/download/track/461559/mp32/"
+    genre;song;artist;downloadurl;\n
+    "blues";"Stazioni metropolitane ";"Pasqualino Ubaldini";"https://mp3d.jamendo.com/download/track/601020/mp32/"\n
+    "blues";"Inertia ";"The TenGooz";"https://mp3d.jamendo.com/download/track/5695/mp32/"\n
+    "blues";"Put up a Resistance ";"Crete Boom";"https://mp3d.jamendo.com/download/track/461559/mp32/"
