@@ -9,13 +9,16 @@ You may acquire one at [https://devportal.jamendo.com/](https://devportal.jamend
 
 # jamendo_ds format
 
-The jamendo_ds format is used to describe datasets that may be downloaded **through cli.py** using the csv command. It simply consists of csv files with
+The jamendo_ds format is used to describe datasets that may be downloaded through **cli.py** using the csv command. It simply consists of csv files with
 the following columns: "genre", "song", "artist", "downloadurl". Each column is separated by a semi-colon ";" and each track is separated by a new-line character "\n". 
 All string entries must be enclosed by double-quotes "**"**".
 
 ## example jamendo_ds csv file
 
-> genre;song;artist;downloadurl;\\n\n
+> genre;song;artist;downloadurl;\n
+
 >"blues";"Stazioni metropolitane ";"Pasqualino Ubaldini";"https://mp3d.jamendo.com/download/track/601020/mp32/"\n
+
 >"blues";"Inertia ";"The TenGooz";"https://mp3d.jamendo.com/download/track/5695/mp32/"\n
+
 >"blues";"Put up a Resistance ";"Crete Boom";"https://mp3d.jamendo.com/download/track/461559/mp32/"
