@@ -230,14 +230,12 @@ def with_genres(genres):
 
         file_list.write("\"%s\";\"%s\";\"%s\";\"%s\"\n" % (genre, song_name, artist_name, song[1]))
 
-    exit(0)
-
     pool = Pool(processes=4)
 
     if not os.path.exists(OUTPUT_FOLDER):
         os.makedirs(OUTPUT_FOLDER)
 
-    pool.map(download_song, work)
+    pool.map(download_song, filtered_work)
 
 if __name__ == "__main__":
 
