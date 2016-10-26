@@ -154,6 +154,7 @@ def slugify(string):
 
     s = string.translate(remap)
     s = s.replace("&quot;", "")
+    s = s.replace("&amp;", "")
 
     return s
 
@@ -267,7 +268,7 @@ def with_genres(genres, list_file="jamendo_list.csv", song_dir="./jamendo_downlo
         file_list.write("\"%s\";\"%s\";\"%s\";\"%s\"\n" % (genre, song_name, artist_name, song[1]))
 
     pool = Pool(processes=4)
-
+    
     if not os.path.exists(OUTPUT_FOLDER):
         os.makedirs(OUTPUT_FOLDER)
 
@@ -275,7 +276,7 @@ def with_genres(genres, list_file="jamendo_list.csv", song_dir="./jamendo_downlo
 
 if __name__ == "__main__":
 
-    genre = ['reggae', 'classical']
+    genre = ["blues", "classical", "country", "disco", "hiphop", "jazz", "metal", "pop", "reggae", "rock"]
 
     with_genres(genre)
 
