@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import jamendo_ds as jd
 import sys
 

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from sklearn.cross_validation import StratifiedKFold
 import sys
 import os

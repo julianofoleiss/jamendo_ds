@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import codecs
 import sys
 
@@ -5,7 +6,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) < 3:
         print("this program generates a genre meta file from a jamendo_ds csv")
-        print("usage: %s jamendo_ds_csv metafile [prefix]")
+        print("usage: %s jamendo_ds_csv metafile [prefix]" % (sys.argv[0]))
         exit(1)
 
     csv_filename = sys.argv[1]
