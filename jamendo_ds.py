@@ -185,9 +185,10 @@ def from_csv(csv_filename="jamendo_list.csv", song_dir="./jamendo_downloaded/"):
         genre = track[0].strip()
         song_name = track[1].strip()
         artist_name = track[2].strip()
-        url = track[3].strip()
+        songno = track[3].strip()
+        url = track[4].strip()
 
-        work.append((genre + "_" + song_name + " (" + artist_name + ")", url, i) )
+        work.append((genre + "_" + songno , url, i) )
     
     pool = Pool(processes=4)
 
@@ -199,22 +200,17 @@ def from_csv(csv_filename="jamendo_list.csv", song_dir="./jamendo_downloaded/"):
     pool.map(download_song, work)    
 
 
-def with_genres(genres, list_file="jamendo_list.csv", song_dir="./jamendo_downloaded/"):
-
-    if song_dir[-1] != "/":
-        song_dir += "/"
-    
-    OUTPUT_FOLDER = song_dir
+def query_tags(genres, list_file="jamendo_list.csv"):
 
     file_list = codecs.open(list_file, "w", encoding='utf-8')
-    file_list.write("genre;song;artist;downloadurl;\n")
+    file_list.write("genre;song;artist;songno;downloadurl;\n")
 
     if type(genres) != list:
         genres = [genres]
     
     work = []
     k = 0
-
+    
     for genre in genres:
         lst, artists, albums = get_genre_max_filelist(genre, cc=[], max_tracks=1000, groupby='')
 
@@ -260,23 +256,24 @@ def with_genres(genres, list_file="jamendo_list.csv", song_dir="./jamendo_downlo
 
     filtered_work = sorted(filtered_work, key=lambda x: x[0].split("_")[0])
 
+    prev_genre = "nenhum"
+    songno = 0
+
     for song in filtered_work:
         genre = song[0].split("_")[0]
         artist_name = song[0].split("(")[1].replace(")", "")
         song_name = song[0].replace(genre + "_", "").replace("(" + artist_name + ")", "")
 
-        file_list.write("\"%s\";\"%s\";\"%s\";\"%s\"\n" % (genre, song_name, artist_name, song[1]))
+        if genre != prev_genre:
+            prev_genre = genre
+            songno = 0
 
-    pool = Pool(processes=4)
-    
-    if not os.path.exists(OUTPUT_FOLDER):
-        os.makedirs(OUTPUT_FOLDER)
-
-    pool.map(download_song, filtered_work)
+        file_list.write("\"%s\";\"%s\";\"%s\";%04d;\"%s\"\n" % (genre, song_name, artist_name, songno, song[1]))
+        songno+=1
 
 if __name__ == "__main__":
 
     genre = ["blues", "classical", "country", "disco", "hiphop", "jazz", "metal", "pop", "reggae", "rock"]
 
-    with_genres(genre)
+    query_tags(genre)
 
