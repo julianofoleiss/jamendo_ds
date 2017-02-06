@@ -65,6 +65,43 @@ def get_genre_filelist(genre, offset=0, limit=10, fmt='jsonpretty', cc=['ccnc'],
     return request, response
 
 
+def get_song_musicinfo(songid):
+    request = "https://api.jamendo.com/v3.0/tracks?format=json&client_id=%s&include=musicinfo&id=%s" % (CLIENT_ID, songid) 
+    response = requests.get(request)
+
+    j = json.loads(response.content)
+
+    #pprint(j)
+
+    if j['headers']['results_count'] > 0:
+        return j['results'][0]
+    else:
+        return None
+
+def print_song_music_info(csv_filename):
+    with codecs.open(csv_filename, "r", encoding='utf-8') as f:
+        contents = f.readlines()
+
+    for i in xrange(1, len(contents)):
+        track = contents[i].replace("\"", "").split(";")
+        genre = track[0].strip()
+        song_name = track[1].strip()
+        artist_name = track[2].strip()
+        songno = track[3].strip()
+        url = track[4].strip()
+
+        j_song_id = int(url.split("/")[5])
+
+        musicinfo = get_song_musicinfo(j_song_id)
+
+        if musicinfo is None:
+            pprint ("music information not found for song %s_%d (%s)" % (genre, int(songno) , song_name))
+        else:
+            pprint("Music Information for %s_%d (%s):" % (genre, int(songno), song_name) )
+            pprint (musicinfo['musicinfo'])
+            print
+            
+
 def get_genre_max_filelist(genre, max_tracks=1000, fmt='jsonpretty', cc=['ccsa'], metadata='musicinfo', order='relevance', featured=1, groupby=''):
     query_step = 200
     max_filelist = None
@@ -200,7 +237,7 @@ def from_csv(csv_filename="jamendo_list.csv", song_dir="./jamendo_downloaded/"):
     pool.map(download_song, work)    
 
 
-def query_tags(genres, list_file="jamendo_list.csv"):
+def query_tags(genres, list_file="jamendo_list.csv", artist_filter=True):
 
     file_list = codecs.open(list_file, "w", encoding='utf-8')
     file_list.write("genre;song;artist;songno;downloadurl;\n")
@@ -214,19 +251,29 @@ def query_tags(genres, list_file="jamendo_list.csv"):
     for genre in genres:
         lst, artists, albums = get_genre_max_filelist(genre, cc=[], max_tracks=1000, groupby='')
 
-        artists = artists.values()
+        if artist_filter:
 
-        for i in artists:
-            k+=1
-            song = i[0]
+            artists = artists.values()
 
-            song_name = slugify(song['name'])
-            artist_name = slugify(song['artist_name'])
+            for i in artists:
+                k+=1
+                #pprint(i)
+                song = i[0]
 
-            #file_list.write("\"%s\";\"%s\";\"%s\";\"%s\"\n" % (genre, song_name, artist_name, song['audiodownload']))
+                song_name = slugify(song['name'])
+                artist_name = slugify(song['artist_name'])
 
-            work.append((genre + "_" + song_name + " (" + artist_name + ")", song['audiodownload'], k) )
+                #file_list.write("\"%s\";\"%s\";\"%s\";\"%s\"\n" % (genre, song_name, artist_name, song['audiodownload']))
 
+                work.append((genre + "_" + song_name + " (" + artist_name + ")", song['audiodownload'], k) )
+
+        else:
+
+            for song in lst:
+                k+=1
+                song_name = slugify(song['name'])
+                artist_name = slugify(song['artist_name'])
+                work.append((genre + "_" + song_name + " (" + artist_name + ")", song['audiodownload'], k) )
 
     print("%d tracks were retrieved" % (len(work)))
 
@@ -256,6 +303,8 @@ def query_tags(genres, list_file="jamendo_list.csv"):
 
     filtered_work = sorted(filtered_work, key=lambda x: x[0].split("_")[0])
 
+    #pprint(filtered_work)
+
     prev_genre = "nenhum"
     songno = 0
 
@@ -273,7 +322,9 @@ def query_tags(genres, list_file="jamendo_list.csv"):
 
 if __name__ == "__main__":
 
-    genre = ["blues", "classical", "country", "disco", "hiphop", "jazz", "metal", "pop", "reggae", "rock"]
+    #genre = ["blues", "classical", "country", "disco", "hiphop", "jazz", "metal", "pop", "reggae", "rock"]
+    #query_tags(genre)
 
-    query_tags(genre)
+    #get_song_musicinfo(287774)
 
+    print_song_music_info("jamendo_gtzan.csv")
