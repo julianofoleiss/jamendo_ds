@@ -233,6 +233,8 @@ def from_csv(csv_filename="jamendo_list.csv", song_dir="./jamendo_downloaded/"):
     if song_dir[-1] != "/":
         song_dir += "/"
     
+    global OUTPUT_FOLDER
+
     OUTPUT_FOLDER = song_dir
 
     with codecs.open(csv_filename, "r", encoding='utf-8') as f:
