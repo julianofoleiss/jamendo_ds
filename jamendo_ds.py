@@ -24,7 +24,7 @@ if CLIENT_ID == "youridhere":
 
 
 def get_genre_filelist(genre, offset=0, limit=10, fmt='jsonpretty', cc=['ccnc'], metadata='musicinfo',
-                       order='relevance', featured=1, groupby=''):
+                       order='relevance', featured='true', groupby=''):
     # wrapper to call this API: https://developer.jamendo.com/v3.0/tracks
     #according to groups link above, if one should prioritize weekly popularity:
         # order=relevance+popularity_week_desc
@@ -47,7 +47,7 @@ def get_genre_filelist(genre, offset=0, limit=10, fmt='jsonpretty', cc=['ccnc'],
     :param order: order results by this. check jamendo api docs.
     :type order: str
     :param featured: return only jamendo curated tracks
-    :type featured: int
+    :type featured: str
     :param groupby: group all results from an artist or album. It does not return an aggregated result: it truncates all tracks
         except for the first in the group. Valid values are *artist_id* and *album_id*.
     :type groupby: str
@@ -57,8 +57,13 @@ def get_genre_filelist(genre, offset=0, limit=10, fmt='jsonpretty', cc=['ccnc'],
     for k in cc:
         lic += k + "=true&"
 
-    request = "https://api.jamendo.com/v3.0/tracks/?client_id=%s&featured=%d&type=single albumtrack&order=%s&tags=%s&offset=%d&limit=%d&format=%s&include=%s&groupby=%s&%s" \
-              % (CLIENT_ID, featured, order, genre, offset, limit, fmt, metadata, groupby, lic)
+    if featured == 'true':
+        request = "https://api.jamendo.com/v3.0/tracks/?client_id=%s&featured=%d&type=single albumtrack&order=%s&tags=%s&offset=%d&limit=%d&format=%s&include=%s&groupby=%s&%s" \
+                % (CLIENT_ID, featured, order, genre, offset, limit, fmt, metadata, groupby, lic)
+    else:
+        request = "https://api.jamendo.com/v3.0/tracks/?client_id=%s&type=single albumtrack&order=%s&tags=%s&offset=%d&limit=%d&format=%s&include=%s&groupby=%s&%s" \
+                % (CLIENT_ID, order, genre, offset, limit, fmt, metadata, groupby, lic)
+
     response = requests.get(request)
     #print response.content
 
@@ -102,12 +107,12 @@ def print_song_music_info(csv_filename):
             print
             
 
-def get_genre_max_filelist(genre, max_tracks=1000, fmt='jsonpretty', cc=['ccsa'], metadata='musicinfo', order='relevance', featured=1, groupby=''):
+def get_genre_max_filelist(genre, max_tracks=1000, fmt='jsonpretty', cc=['ccsa'], metadata='musicinfo', order='relevance', featured='true', groupby=''):
     query_step = 200
     max_filelist = None
-    for k in xrange(0, max_tracks, 200):
-        print "getting %s tracks: %d-%d" % (genre, k, k+200-1)
-        req, resp = get_genre_filelist(genre, offset=k, limit=200, fmt=fmt, cc=cc, metadata=metadata, order=order, featured=featured, groupby=groupby)
+    for k in xrange(0, max_tracks, query_step):
+        print "getting %s tracks: %d-%d" % (genre, k, k+query_step-1)
+        req, resp = get_genre_filelist(genre, offset=k, limit=query_step, fmt=fmt, cc=cc, metadata=metadata, order=order, featured=featured, groupby=groupby)
 
         j = json.loads(resp.content)
 
@@ -181,18 +186,31 @@ def download_song(song_data):
 
 
 def slugify(string):
+
+    s = s.replace("&quot;", "")
+    s = s.replace("&amp;", "")
+    s = s.replace("&ntilde;", "")
+    s = s.replace("&atilde;", "")
+    s = s.replace("&#039;", "")
+    s = s.replace("&egrave;", "")
+    s = s.replace("&acute;", "")
+    s = s.replace("&eacute;", "")
+    s = s.replace("&oacute;", "")
+    s = s.replace("&ndash;", "")
+    s = s.replace("&auml;", "")
+    s = s.replace("&uuml;", "")
+
     remap = {
         ord("\t") : ord(" "),
         ord("\n") : None,
         ord("\f") : ord(" "),
         ord("\r") : None,
-        ord("/") : ord(" ")
+        ord("/") : ord(" "),
+        ord(";") : ord(" "),
     }
 
     s = string.translate(remap)
-    s = s.replace("&quot;", "")
-    s = s.replace("&amp;", "")
-
+    
     return s
 
 def tally_classes(work):
@@ -239,6 +257,14 @@ def from_csv(csv_filename="jamendo_list.csv", song_dir="./jamendo_downloaded/"):
 
 def query_tags(genres, list_file="jamendo_list.csv", artist_filter=True):
 
+    filename, file_extension = os.path.splitext(list_file)
+
+    single_tag_list = codecs.open("%s_%s%s" % (filename, 'st', file_extension), "w", encoding='utf-8')
+    multiple_tag_list = codecs.open("%s_%s%s" % (filename, 'mt', file_extension), "w", encoding='utf-8')
+
+    single_tag_list.write("genre;songno;tags\n")
+    multiple_tag_list.write("genre;songno;tags\n")
+
     file_list = codecs.open(list_file, "w", encoding='utf-8')
     file_list.write("genre;song;artist;songno;downloadurl;\n")
 
@@ -249,7 +275,8 @@ def query_tags(genres, list_file="jamendo_list.csv", artist_filter=True):
     k = 0
     
     for genre in genres:
-        lst, artists, albums = get_genre_max_filelist(genre, cc=[], max_tracks=1000, groupby='')
+        #lst, artists, albums = get_genre_max_filelist(genre, cc=[], max_tracks=1000, groupby='')
+        lst, artists, albums = get_genre_max_filelist(genre, cc=[], featured='false', max_tracks=5000, groupby='')
 
         if artist_filter:
 
@@ -265,15 +292,16 @@ def query_tags(genres, list_file="jamendo_list.csv", artist_filter=True):
 
                 #file_list.write("\"%s\";\"%s\";\"%s\";\"%s\"\n" % (genre, song_name, artist_name, song['audiodownload']))
 
-                work.append((genre + "_" + song_name + " (" + artist_name + ")", song['audiodownload'], k) )
+                work.append((genre + "_" + song_name + " (" + artist_name + ")", song['audiodownload'], k, song) )
 
         else:
 
             for song in lst:
+                #pprint(song)
                 k+=1
                 song_name = slugify(song['name'])
                 artist_name = slugify(song['artist_name'])
-                work.append((genre + "_" + song_name + " (" + artist_name + ")", song['audiodownload'], k) )
+                work.append((genre + "_" + song_name + " (" + artist_name + ")", song['audiodownload'], k, song) )
 
     print("%d tracks were retrieved" % (len(work)))
 
@@ -308,6 +336,10 @@ def query_tags(genres, list_file="jamendo_list.csv", artist_filter=True):
     prev_genre = "nenhum"
     songno = 0
 
+    single_tag = []
+    multiple_tags = []
+    gtzan_tags = set(['blues', 'classical', 'country', 'disco', 'hiphop', 'jazz', 'metal', 'pop', 'reggae', 'rock', 'poprock'])
+
     for song in filtered_work:
         genre = song[0].split("_")[0]
         artist_name = song[0].split("(")[1].replace(")", "")
@@ -315,10 +347,38 @@ def query_tags(genres, list_file="jamendo_list.csv", artist_filter=True):
 
         if genre != prev_genre:
             prev_genre = genre
+            print("GENRE: %s\n" % genre)
             songno = 0
 
         file_list.write("\"%s\";\"%s\";\"%s\";%04d;\"%s\"\n" % (genre, song_name, artist_name, songno, song[1]))
         songno+=1
+        
+        #pprint(song[3])
+
+        tags = set(song[3]['musicinfo']['tags']['genres']).intersection(gtzan_tags)
+        if(len(tags) > 1):
+            multiple_tags.append((song[0], genre, songno, song[3]['musicinfo']['tags']['genres']))
+
+            multiple_tag_list.write("\"%s\"; %d; \"" % (genre, songno))
+            for t in song[3]['musicinfo']['tags']['genres']:
+                multiple_tag_list.write("%s, " % t)
+            multiple_tag_list.write("\"\n")
+        else:
+            single_tag.append((song[0], genre, songno, song[3]['musicinfo']['tags']['genres'] ))
+
+            single_tag_list.write("\"%s\"; %d; \"" % (genre, songno))
+            for t in song[3]['musicinfo']['tags']['genres']:
+                single_tag_list.write("%s," % t)
+            single_tag_list.write("\"\n")
+
+    #pprint(multiple_tags)
+    #pprint(single_tag)
+
+    print("%d tracks with single gtzan tag" % len(single_tag))
+    print("%d tracks with multiple gtzan tags" % len(multiple_tags))
+
+    pprint(tally_classes(single_tag))
+    pprint(tally_classes(multiple_tags))
 
 if __name__ == "__main__":
 
