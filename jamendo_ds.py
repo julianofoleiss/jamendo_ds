@@ -6,6 +6,7 @@ import os
 import codecs
 from pprint import pprint
 from multiprocessing import Pool
+import traceback
 
 def load_clientid():
     with open('client_id.txt') as f:
