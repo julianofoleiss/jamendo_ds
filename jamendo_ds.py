@@ -173,17 +173,21 @@ def get_genre_max_filelist(genre, max_tracks=1000, fmt='jsonpretty', cc=['ccsa']
 
 
 def download_song(song_data):
-    name = song_data[0]
-    url = song_data[1]
-    n = song_data[2]
+    try:
+        name = song_data[0]
+        url = song_data[1]
+        n = song_data[2]
 
-    req = url
-    mp3_data = requests.get(req)
-    print('downloading song %d: %s...' % (n, name) )
-    f = open( OUTPUT_FOLDER + name + '.mp3', 'w')
-    f.write(mp3_data.content)
-    f.close()
+        req = url
+        mp3_data = requests.get(req)
+        print('downloading song %d: %s...' % (n, name) )
+        f = open( OUTPUT_FOLDER + name + '.mp3', 'w')
+        f.write(mp3_data.content)
+        f.close()
 
+    except Exception:
+        traceback.print_exc()
+        raise
 
 def slugify(string):
 
