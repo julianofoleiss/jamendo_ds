@@ -192,6 +192,8 @@ def download_song(song_data):
 
 def slugify(string):
 
+    s = string
+
     s = s.replace("&quot;", "")
     s = s.replace("&amp;", "")
     s = s.replace("&ntilde;", "")
@@ -214,7 +216,7 @@ def slugify(string):
         ord(";") : ord(" "),
     }
 
-    s = string.translate(remap)
+    s = s.translate(remap)
     
     return s
 
@@ -290,9 +292,14 @@ def query_tags(genres, list_file="jamendo_list.csv", artist_filter=True):
             artists = artists.values()
 
             for i in artists:
-                k+=1
+                
                 #pprint(i)
                 song = i[0]
+
+                if song['duration'] < 90:
+                    continue
+
+                k+=1
 
                 song_name = slugify(song['name'])
                 artist_name = slugify(song['artist_name'])
@@ -305,6 +312,10 @@ def query_tags(genres, list_file="jamendo_list.csv", artist_filter=True):
 
             for song in lst:
                 #pprint(song)
+
+                if song['duration'] < 90:
+                    continue
+
                 k+=1
                 song_name = slugify(song['name'])
                 artist_name = slugify(song['artist_name'])
