@@ -2,7 +2,8 @@ import subprocess
 import glob
 import sys
 import os
-
+from multiprocessing import Pool
+import traceback
 
 def get_song_duration(filename):
 
@@ -16,8 +17,7 @@ def get_song_duration(filename):
 
     duration = float(duration[1]) * 3600 + float(duration[2]) * 60 + float(duration[3].split("=")[0])
 
-    print ("trimming %s (%.2fs) to 30s..." %  (filename, duration)  )
-
+    
     return duration
 
 def human_readable(seconds):
@@ -25,7 +25,7 @@ def human_readable(seconds):
     h, m = divmod(m, 60)
     return h, m, s
 
-def trim_middle(infile, outfile, position, duration):
+def trim_middle(infile, outfile, position, duration, mix_channels):
 
     ini = int(position - (duration / 2))
     end = int(position + (duration / 2))
@@ -36,14 +36,37 @@ def trim_middle(infile, outfile, position, duration):
     h, m, s = human_readable(end)
     end = "%02d:%02d:%02d" % (h, m, s)
 
-    command = [ "sox", infile, outfile, "trim", str(ini), "=" + str(end) ]
+    #command = [ "sox", infile, outfile, "trim", str(ini), "=" + str(end) ]
 
-    subprocess.call(command)
+    command = "sox %s %s trim %s =%s" % (infile, outfile, str(ini), str(end))
+    #print command
+    if mix_channels:
+        command += " channels 1 "
+
+    subprocess.call(command, shell=True)
+
+def trimmer_thread(work):
+    try:
+        song = work[0]
+        path = work[1]
+        duration = work[2]
+        length = work[3]
+        mix_channels = work[4]
+
+        print ("trimming %s (%.2fs) to 30s... %s" %  (path, duration, "mixing channels" if mix_channels else "")  )
+
+        trim_middle(song, path, duration, length, mix_channels)
+
+    except Exception:
+        traceback.print_exc()
+        raise
 
 if __name__ == "__main__":
 
     mp3folder = sys.argv[1]
     clipped_folder = sys.argv[2]
+
+    mix_channels = True if "mixchannels" in sys.argv else False
 
     if clipped_folder[-1] != "/":
         clipped_folder +="/"
@@ -53,8 +76,16 @@ if __name__ == "__main__":
 
     songs = sorted([i for i in glob.glob( mp3folder + '/*.mp3')])
 
+    print len(songs)
+
+    pool = Pool(4)
+
+    work = []
+
     for song in songs:
         duration = get_song_duration(song)
         filename = os.path.splitext(song)[0].split("/")[-1]
-        trim_middle(song, clipped_folder + filename + "_trimmed.mp3", duration / 2, 30)
+        work.append((song, clipped_folder + filename + "_trimmed.mp3", duration / 2, 30, mix_channels))
+
+    pool.map(trimmer_thread, work)
     

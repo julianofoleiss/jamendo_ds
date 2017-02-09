@@ -2,6 +2,7 @@ import subprocess
 import glob
 import sys
 import os
+from multiprocessing import Pool
 
 def trim_middle(infile, outfile, position, duration):
     ini = int(position - (duration / 2))
@@ -31,6 +32,16 @@ def downsample(infile, outfile, mix):
 
     subprocess.call(command, shell=True)
 
+def downsample_thread(work):
+
+    song = work[0]
+    path = work[1]
+    mix = work[2]
+
+    print("Downsampling %s to 22050KHz..." % path)
+
+    downsample(song, path, mix)
+
 if __name__ == "__main__":
 
     mp3folder = sys.argv[1]
@@ -47,8 +58,14 @@ if __name__ == "__main__":
 
     songs = sorted([i for i in glob.glob( mp3folder + '/*.mp3')])
 
+    pool = Pool(4)
+
+    work = []
+
     for song in songs:
         filename = os.path.splitext(song)[0].split("/")[-1]
-        print("Downsampling %s to 22050KHz..." % filename)
-        downsample(song, out_folder + filename + "_22KHz." + out_format, mix_channels)
+        work.append((song, out_folder + filename + "_22KHz." + out_format, mix_channels))
     
+    pool.map(downsample_thread, work)
+    
+    print("Done!")

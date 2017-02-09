@@ -206,7 +206,7 @@ def slugify(string):
     s = s.replace("&ndash;", "")
     s = s.replace("&auml;", "")
     s = s.replace("&uuml;", "")
-
+    
     remap = {
         ord("\t") : ord(" "),
         ord("\n") : None,
@@ -214,6 +214,8 @@ def slugify(string):
         ord("\r") : None,
         ord("/") : ord(" "),
         ord(";") : ord(" "),
+        ord("\"" ) : ord(" "),
+        ord("'") : ord(" ")
     }
 
     s = s.translate(remap)
@@ -254,7 +256,7 @@ def from_csv(csv_filename="jamendo_list.csv", song_dir="./jamendo_downloaded/"):
 
         work.append((genre + "_" + songno , url, i) )
     
-    pool = Pool(processes=4)
+    pool = Pool(processes=8)
 
     if not os.path.exists(OUTPUT_FOLDER):
         os.makedirs(OUTPUT_FOLDER)
@@ -275,7 +277,7 @@ def query_tags(genres, list_file="jamendo_list.csv", artist_filter=True):
     multiple_tag_list.write("genre;songno;tags\n")
 
     file_list = codecs.open(list_file, "w", encoding='utf-8')
-    file_list.write("genre;song;artist;songno;downloadurl;\n")
+    file_list.write("genre;song;artist;songno;downloadurl;duration;\n")
 
     if type(genres) != list:
         genres = [genres]
@@ -293,10 +295,15 @@ def query_tags(genres, list_file="jamendo_list.csv", artist_filter=True):
 
             for i in artists:
                 
-                #pprint(i)
+                #pprint(i[0])
                 song = i[0]
+                duration = int(song['duration'])
 
-                if song['duration'] < 90:
+                if (duration < 90) or (duration > 500):
+                    print("song %d too short or too long! (%ds)" % ( int(song['id']), duration))
+                    continue
+
+                if song['audiodownload'] == "https://mp3d.jamendo.com/download/track/1134397/mp32/":
                     continue
 
                 k+=1
@@ -306,20 +313,25 @@ def query_tags(genres, list_file="jamendo_list.csv", artist_filter=True):
 
                 #file_list.write("\"%s\";\"%s\";\"%s\";\"%s\"\n" % (genre, song_name, artist_name, song['audiodownload']))
 
-                work.append((genre + "_" + song_name + " (" + artist_name + ")", song['audiodownload'], k, song) )
+                work.append((genre + "_" + song_name + " (" + artist_name + ")", song['audiodownload'], k, song, duration ) )
 
         else:
 
             for song in lst:
                 #pprint(song)
 
-                if song['duration'] < 90:
+                duration = int(song['duration'])
+                if (duration < 90) or (duration > 500):
+                    print("song %d too short or too long! (%ds)" % ( int(song['id']), duration))
+                    continue
+
+                if song['audiodownload'] == "https://mp3d.jamendo.com/download/track/1134397/mp32/":
                     continue
 
                 k+=1
                 song_name = slugify(song['name'])
                 artist_name = slugify(song['artist_name'])
-                work.append((genre + "_" + song_name + " (" + artist_name + ")", song['audiodownload'], k, song) )
+                work.append((genre + "_" + song_name + " (" + artist_name + ")", song['audiodownload'], k, song, duration ) )
 
     print("%d tracks were retrieved" % (len(work)))
 
@@ -368,7 +380,7 @@ def query_tags(genres, list_file="jamendo_list.csv", artist_filter=True):
             print("GENRE: %s\n" % genre)
             songno = 0
 
-        file_list.write("\"%s\";\"%s\";\"%s\";%04d;\"%s\"\n" % (genre, song_name, artist_name, songno, song[1]))
+        file_list.write("\"%s\";\"%s\";\"%s\";%04d;\"%s\";%d\n" % (genre, song_name, artist_name, songno, song[1], song[4]))
         songno+=1
         
         #pprint(song[3])
