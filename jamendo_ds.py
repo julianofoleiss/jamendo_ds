@@ -254,7 +254,7 @@ def from_csv(csv_filename="jamendo_list.csv", song_dir="./jamendo_downloaded/"):
         songno = track[3].strip()
         url = track[4].strip()
 
-        work.append((genre + "_" + songno , url, i) )
+        work.append((genre + "_" + ("%04d" % int(songno)) , url, i) )
     
     pool = Pool(processes=8)
 

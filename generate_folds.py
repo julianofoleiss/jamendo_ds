@@ -12,7 +12,7 @@ if __name__ == "__main__":
         exit(1)
     
     meta_filename = sys.argv[1]
-    k = sys.argv[2]
+    k = int(sys.argv[2])
     prefix = sys.argv[3] if len(sys.argv) > 3 else os.path.basename(os.path.splitext(meta_filename)[0])
 
     with open(meta_filename) as f:
@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     labels = [i.split("\t")[1].strip() for i in content]
 
-    folds = StratifiedKFold(labels, n_folds=10, shuffle=True)
+    folds = StratifiedKFold(labels, n_folds=k, shuffle=True)
 
     fold = 1
     for train_index, test_index in folds:
