@@ -44,9 +44,14 @@ def downsample_thread(work):
 
 if __name__ == "__main__":
 
+    if len(sys.argv) < 5:
+        print("Usage: %s mp3_folder out_folder rate input_extension" % sys.argv[0])
+        exit(1)
+
     mp3folder = sys.argv[1]
     out_folder = sys.argv[2]
     rate = int(sys.argv[3])
+    input_format = sys.argv[4]
 
     out_format = "wav" if "towav" in sys.argv else "mp3"
     mix_channels = True if "mixchannels" in sys.argv else False
@@ -57,7 +62,9 @@ if __name__ == "__main__":
     if not os.path.exists(out_folder):
         os.makedirs(out_folder)
 
-    songs = sorted([i for i in glob.glob( mp3folder + '/*.mp3')])
+    print mp3folder + '/*.%s' % input_format
+
+    songs = sorted([i for i in glob.glob( mp3folder + '/*.%s' % input_format)])
 
     pool = Pool(4)
 
