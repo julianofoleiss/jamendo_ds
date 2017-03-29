@@ -2,23 +2,29 @@ import subprocess
 import glob
 import sys
 import os
+import fnmatch
 from multiprocessing import Pool
 
-def trim_middle(infile, outfile, position, duration):
-    ini = int(position - (duration / 2))
-    end = int(position + (duration / 2))
-    
-    h, m, s = human_readable(ini)
-    ini = "%02d:%02d:%02d" % (h, m, s)
+def recursive_glob(rootdir='.', pattern='*'):
+	"""Search recursively for files matching a specified pattern.
+	
+	Adapted from http://stackoverflow.com/questions/2186525/use-a-glob-to-find-files-recursively-in-python
+	"""
 
-    h, m, s = human_readable(end)
-    end = "%02d:%02d:%02d" % (h, m, s)
+	matches = []
+	for root, dirnames, filenames in os.walk(rootdir):
+	  for filename in fnmatch.filter(filenames, pattern):
+		  matches.append(os.path.join(root, filename))
 
-    command = [ "sox", infile, outfile, "trim", str(ini), "=" + str(end) ]
+	return matches
 
-    subprocess.call(command)
+def shellquote(s):
+    return "'" + s.replace("'", "'\\''") + "'"
 
 def downsample(infile, outfile, mix, rate):
+
+    infile = shellquote(infile)
+    outfile = shellquote(outfile)
 
     command = "sox %s %s " % (infile, outfile)
 
@@ -64,7 +70,9 @@ if __name__ == "__main__":
 
     print mp3folder + '/*.%s' % input_format
 
-    songs = sorted([i for i in glob.glob( mp3folder + '/*.%s' % input_format)])
+    songs = sorted([i for i in recursive_glob(mp3folder, '*.%s' % input_format)])
+
+    print songs
 
     pool = Pool(4)
 
@@ -72,8 +80,9 @@ if __name__ == "__main__":
 
     for song in songs:
         filename = os.path.splitext(song)[0].split("/")[-1]
-        work.append((song, out_folder + filename + "_%dHz." % (rate) + out_format, mix_channels, rate))
-    
+        work.append((song, out_folder + filename + "." + out_format, mix_channels, rate))
+
     pool.map(downsample_thread, work)
     
     print("Done!")
+
